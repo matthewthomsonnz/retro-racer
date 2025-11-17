@@ -1,0 +1,44 @@
+import { Player } from '../../game/player/Player';
+
+export class KeyboardInputHandler {
+    private readonly player: Player;
+
+    constructor(player: Player) {
+        this.player = player;
+    }
+
+    attachListeners(target: Window): void {
+        target.addEventListener('keydown', this.handleKeyEvent);
+        target.addEventListener('keyup', this.handleKeyEvent);
+    }
+
+    private handleKeyEvent = (event: KeyboardEvent): void => {
+        const isKeyDown = event.type === 'keydown';
+
+        switch (event.key) {
+            case 'W':
+            case 'w':
+                this.player.keyState.w = isKeyDown;
+                break;
+            case 'A':
+            case 'a':
+                this.player.keyState.a = isKeyDown;
+                break;
+            case 'S':
+            case 's':
+                this.player.keyState.s = isKeyDown;
+                break;
+            case 'D':
+            case 'd':
+                this.player.keyState.d = isKeyDown;
+                break;
+            case 'C':
+            case 'c':
+                if (!isKeyDown) {
+                    this.player.chaseCameraEnabled = !this.player.chaseCameraEnabled;
+                }
+                break;
+        }
+    };
+}
+
