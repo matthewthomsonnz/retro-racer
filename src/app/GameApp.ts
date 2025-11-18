@@ -15,14 +15,13 @@ export class GameApp {
         const world = new GameWorld(rendererContext, player, assetLoader);
         await world.initialize();
 
-        const cameraController = new CameraController(rendererContext.camera);
+        const cameraController = new CameraController(rendererContext.camera, rendererContext.renderer.domElement);
         const renderSystem = new RenderSystem(player, world, rendererContext, cameraController);
         const loop = new Loop(renderSystem);
 
-        const keyboardInput = new KeyboardInputHandler(player);
+        const keyboardInput = new KeyboardInputHandler(player, cameraController);
         keyboardInput.attachListeners(window);
 
         loop.start();
     }
 }
-

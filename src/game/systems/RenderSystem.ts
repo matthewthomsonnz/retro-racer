@@ -28,8 +28,8 @@ export class RenderSystem {
         this.player.updatePosition();
 
         this.cameraController.updateForPlayer(this.player);
+        this.cameraController.updateControls();
 
         this.rendererContext.renderer.render(this.rendererContext.scene, this.rendererContext.camera);
     }
 }
-

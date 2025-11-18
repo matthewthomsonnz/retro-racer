@@ -1,10 +1,13 @@
 import { Player } from '../../game/player/Player';
+import { CameraController } from '../../game/world/CameraController';
 
 export class KeyboardInputHandler {
     private readonly player: Player;
+    private readonly cameraController?: CameraController;
 
-    constructor(player: Player) {
+    constructor(player: Player, cameraController?: CameraController) {
         this.player = player;
+        this.cameraController = cameraController;
     }
 
     attachListeners(target: Window): void {
@@ -14,6 +17,11 @@ export class KeyboardInputHandler {
 
     private handleKeyEvent = (event: KeyboardEvent): void => {
         const isKeyDown = event.type === 'keydown';
+
+        if (isKeyDown && event.ctrlKey && event.shiftKey && event.altKey && (event.key === 'O' || event.key === 'o')) {
+            this.cameraController?.toggleOrbitControls();
+            return;
+        }
 
         switch (event.key) {
             case 'W':
@@ -41,4 +49,3 @@ export class KeyboardInputHandler {
         }
     };
 }
-
