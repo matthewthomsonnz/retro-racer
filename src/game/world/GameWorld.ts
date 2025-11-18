@@ -30,6 +30,7 @@ export class GameWorld {
 
         const [trackModel, carModel, waterTexture] = await Promise.all([
             loader.loadTrackModel(),
+
             loader.loadCarModel(),
             loader.loadWaterTexture(),
         ]);
@@ -67,8 +68,9 @@ export class GameWorld {
         }
 
         this.rendererContext.scene.add(this.track);
-        this.track.position.set(50, 540, -1160);
-        this.track.scale.set(25, 25, 25);
+        this.track.position.set(0, 0, 0);
+        this.track.scale.set(25, 25, 75);
+
     }
 
     private configureCar(): void {
@@ -105,9 +107,9 @@ export class GameWorld {
 
     private createLights(): void {
         const lights: [THREE.Light, [number, number, number]][] = [
-            [new THREE.PointLight(0xffffff, 1, 5155), [1440, 1222, 0]],
-            [new THREE.PointLight(0xffffff, 1, 6155), [-540, 1222, 440]],
-            [new THREE.HemisphereLight(0xfff0f0, 0x606066, 0.2), [1, 1, 1]],
+            [new THREE.PointLight(0xffffff, 5, 5155), [0, 0, 0]],
+            [new THREE.PointLight(0xffffff, 5, 6155), [0, 0, 0]],
+            [new THREE.HemisphereLight(0xfff0f0, 0x606066, 2.2), [1, 1, 1]],
         ];
 
         lights.forEach(entry => {

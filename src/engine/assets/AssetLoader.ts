@@ -19,10 +19,50 @@ export class AssetLoader {
     }
 
     loadTrackModel(): Promise<THREE.Object3D> {
-        const url = '/src/assets/models/track.obj';
-        return new Promise((resolve, reject) => {
-            this.objectLoader.load(url, resolve, undefined, reject);
+        const trackWidth = 2;
+
+        const shape = new THREE.Shape();
+        shape.moveTo(-trackWidth, 0);
+        shape.lineTo(trackWidth, 0, );
+        shape.lineTo(trackWidth, -2, );
+        shape.lineTo(trackWidth+2, -2, );
+        shape.lineTo(trackWidth+2, -3, );
+        shape.lineTo(-trackWidth-2, -3, );
+        shape.lineTo(-trackWidth-2, -2, );
+        shape.lineTo(-trackWidth, -2, );
+        shape.lineTo(-trackWidth, 0, );
+
+        const startPoint = new THREE.Vector3(0, 0, 0);
+        const path = new THREE.CurvePath();
+        const straightEnd = new THREE.Vector3(10, 0, 0);
+        path.add(new THREE.LineCurve3(startPoint, straightEnd));
+
+        const curveRadius = 22;
+        const curveStart = straightEnd.clone();
+        const curveEnd = new THREE.Vector3(22, 0, curveRadius);
+
+        const cp1 = new THREE.Vector3(3, 0, 22 );
+        const cp2 = new THREE.Vector3(3 * 0.45, 0, 22);
+
+        path.add(new THREE.CubicBezierCurve3(
+            curveStart,
+            cp1,
+            cp2,
+            curveEnd
+        ));
+        const extrudeSettings = {
+            steps: 100,
+            bevelEnabled: false,
+            extrudePath: path
+        };
+
+        const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+
+        const material = new THREE.MeshStandardMaterial({
+            color: 0x555555,
+            side: THREE.DoubleSide
         });
+        return new THREE.Mesh(geometry, material);
     }
 
     loadWaterTexture(): Promise<THREE.Texture> {
