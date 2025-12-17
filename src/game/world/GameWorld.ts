@@ -69,7 +69,7 @@ export class GameWorld {
 
         this.rendererContext.scene.add(this.track);
         this.track.position.set(0, 0, 0);
-        this.track.scale.set(25, 25, 75);
+        this.track.scale.set(10, 10, 30);
 
     }
 

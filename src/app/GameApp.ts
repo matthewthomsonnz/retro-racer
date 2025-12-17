@@ -25,3 +25,4 @@ export class GameApp {
         loop.start();
     }
 }
+

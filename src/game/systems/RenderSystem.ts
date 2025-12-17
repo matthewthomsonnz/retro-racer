@@ -23,13 +23,10 @@ export class RenderSystem {
 
         this.player.carModel.rotation.y = this.player.rotation;
         this.player.carModel.position.set(this.player.x, this.player.y, this.player.z);
-
         this.player.updateGrounding(this.world.track);
         this.player.updatePosition();
-
         this.cameraController.updateForPlayer(this.player);
-        this.cameraController.updateControls();
-
         this.rendererContext.renderer.render(this.rendererContext.scene, this.rendererContext.camera);
     }
 }
+
