@@ -3,7 +3,7 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 
 export class AssetLoader {
     private readonly textureLoader: THREE.TextureLoader;
-    private readonly objectLoader: OBJLoader;
+    private readonly objectLoader: any;
 
     constructor(manager?: THREE.LoadingManager) {
         const loadingManager = manager ?? new THREE.LoadingManager();
@@ -19,7 +19,7 @@ export class AssetLoader {
     }
 
     loadTrackModel(): Promise<THREE.Object3D> {
-        const trackWidth = 2;
+        const trackWidth = 6;
 
         const shape = new THREE.Shape();
         shape.moveTo(-trackWidth, 0);
@@ -33,11 +33,11 @@ export class AssetLoader {
         shape.lineTo(-trackWidth, 0, );
 
         const startPoint = new THREE.Vector3(0, 0, 0);
-        const path = new THREE.CurvePath();
+        const path = new THREE.CurvePath<THREE.Vector3>();
         const straightEnd = new THREE.Vector3(10, 0, 0);
         path.add(new THREE.LineCurve3(startPoint, straightEnd));
 
-        const curveRadius = 22;
+        const curveRadius = 17;
         const curveStart = straightEnd.clone();
         const curveEnd = new THREE.Vector3(22, 0, curveRadius);
 
@@ -62,7 +62,8 @@ export class AssetLoader {
             color: 0x555555,
             side: THREE.DoubleSide
         });
-        return new THREE.Mesh(geometry, material);
+        const mesh = new THREE.Mesh(geometry, material);
+        return Promise.resolve(mesh);
     }
 
     loadWaterTexture(): Promise<THREE.Texture> {

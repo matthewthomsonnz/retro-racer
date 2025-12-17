@@ -43,7 +43,18 @@ export class KeyboardInputHandler {
             case 'C':
             case 'c':
                 if (!isKeyDown) {
-                    this.player.chaseCameraEnabled = !this.player.chaseCameraEnabled;
+                    const newMode = this.cameraController?.cycleCamera();
+                    if (newMode !== undefined) {
+                        this.player.chaseCameraEnabled = (newMode === 1);
+                    } else {
+                        this.player.chaseCameraEnabled = !this.player.chaseCameraEnabled;
+                    }
+                }
+                break;
+            case 'V':
+            case 'v':
+                if (!isKeyDown) {
+                    this.cameraController?.cycleCamera();
                 }
                 break;
         }
