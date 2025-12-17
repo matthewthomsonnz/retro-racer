@@ -2,6 +2,7 @@ import { Player } from '../player/Player';
 import { GameWorld } from '../world/GameWorld';
 import { RendererContext } from '../../rendering/RendererContext';
 import { CameraController } from '../world/CameraController';
+import { Angle } from '../../utils/Angle';
 
 export class RenderSystem {
     private readonly player: Player;
@@ -21,7 +22,7 @@ export class RenderSystem {
             return;
         }
 
-        this.player.carModel.rotation.y = this.player.rotation;
+        this.player.carModel.rotation.y = Angle.toRadians(this.player.rotation);
         this.player.carModel.position.set(this.player.x, this.player.y, this.player.z);
         this.player.updateGrounding(this.world.track);
         this.player.updatePosition();
@@ -29,4 +30,3 @@ export class RenderSystem {
         this.rendererContext.renderer.render(this.rendererContext.scene, this.rendererContext.camera);
     }
 }
-
