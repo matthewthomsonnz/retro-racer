@@ -35,7 +35,7 @@ export class Player {
         this.velocity = 0;
         this.lap = 1;
         this.rotation = rotation;
-        this.chaseCameraEnabled = false;
+        this.chaseCameraEnabled = true;
         this.checkpointReached = false;
         this.keyState = {
             w: false,
@@ -103,4 +103,3 @@ export class Player {
         }
     }
 }
-

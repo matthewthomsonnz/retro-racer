@@ -18,11 +18,6 @@ export class KeyboardInputHandler {
     private handleKeyEvent = (event: KeyboardEvent): void => {
         const isKeyDown = event.type === 'keydown';
 
-        if (isKeyDown && event.ctrlKey && event.shiftKey && event.altKey && (event.key === 'O' || event.key === 'o')) {
-            this.cameraController?.toggleOrbitControls();
-            return;
-        }
-
         switch (event.key) {
             case 'W':
             case 'w':

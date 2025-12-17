@@ -15,7 +15,7 @@ export class GameApp {
         const world = new GameWorld(rendererContext, player, assetLoader);
         await world.initialize();
 
-        const cameraController = new CameraController(rendererContext.camera, rendererContext.renderer.domElement);
+        const cameraController = new CameraController(rendererContext.camera);
         const renderSystem = new RenderSystem(player, world, rendererContext, cameraController);
         const loop = new Loop(renderSystem);
 
@@ -25,4 +25,3 @@ export class GameApp {
         loop.start();
     }
 }
-
