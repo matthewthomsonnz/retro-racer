@@ -52,11 +52,10 @@ export class AssetLoader {
             const radius = (amount / 4) * radiusBase;
 
             const perpRight = new THREE.Vector3(-currentDir.z, 0, currentDir.x).normalize();
-            const sideSign = -Math.sign(angle); // choose perp direction so positive for right-turn
+            const sideSign = turnRight ? 1 : -1; // right turns go toward +perpRight
 
             const curveEnd = currentPoint.clone()
-                .add(currentDir.clone().multiplyScalar(radius))
-                .add(perpRight.clone().multiplyScalar(sideSign * radius));
+                .add(endDir.clone().multiplyScalar(radius));
 
             const cpLen = radius * 0.3;
             const cpSide = radius * 0.6 * sideSign;
@@ -66,8 +65,8 @@ export class AssetLoader {
                 .add(perpRight.clone().multiplyScalar(cpSide));
 
             const cp2 = curveEnd.clone()
-                .sub(endDir.clone().multiplyScalar(cpLen))
-                .add(perpRight.clone().multiplyScalar(cpSide));
+                 .sub(endDir.clone().multiplyScalar(cpLen))
+                 .add(perpRight.clone().multiplyScalar(cpSide));
 
             path.add(new THREE.CubicBezierCurve3(currentPoint.clone(), cp1, cp2, curveEnd.clone()));
 
