@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { levelOneData } from '../../data/levels';
 
 export class AssetLoader {
     private readonly textureLoader: THREE.TextureLoader;
@@ -19,13 +20,8 @@ export class AssetLoader {
     }
 
     loadTrackModel(): Promise<THREE.Object3D> {
-        const trackWidth = 6;
-const basisString = 'sB\\00M\\00h\n' +
-    '\\00\\00\\39\\C1\\05\\00\\00\\01\\00\\00\\00\\01\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\07\\00\\C0\\00\\00\\00\\2F\\00\\00\\0C\\00\\EF\\00\\00\\00\\31\\00\\00\\20\\01\\00\\00\\37\\00\\00\\00\\4D\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\10\\00\\10\\00\\04\\00\\04\\00\\57\n' +
-    '\\01\\00\\00\\0B\\00\\00\\00\\E6\\D0\\00\\00\\00\\01\\00\\08\\00\\08\\00\\02\\00\\02\\00\\62\\01\\00\\00\\04\\00\\00\\00\\BF\\83\\00\\00\\00\\02\\00\\04\\00\\04\\00\\01\\00\\01\\00\\66\\01\\00\\00\\02\\00\\00\\00\\F1\\A7\\00\\00\\00\\03\\00\\02\\00\\02\\00\\01\\00\\01\\00\\68\\01\\00\\00\\01\\00\\00\\00\\4B\\A2\\00\\00\n' +
-    '\\00\\04\\00\\01\\00\\01\\00\\01\\00\\01\\00\\69\\01\\00\\00\\01\\00\\00\\00\\4B\\A2\\01\\C0\\04\\00\\00\\00\\00\\00\\00\\02\\04\\88\\1B\\20\\00\\00\\00\\00\\29\\A3\\23\\F8\\00\\A6\\04\\00\\00\\00\\00\\00\\90\\1F\\02\\04\\20\\02\\80\\00\\00\\00\\20\\44\\9F\\64\\2D\\C6\\6B\\B4\\B2\\AA\\AA\\AA\\B2\\BA\\BA\\AA\\AA\\AC\\AE\n' +
-    '\\AE\\AC\\AC\\AA\\A2\\E0\\E1\\01\\00\\00\\00\\10\\00\\00\\00\\00\\04\\04\\04\\04\\04\\06\\06\\06\\1E\\18\\18\\10\\18\\18\\18\\18\\50\\55\\55\\55\\05\\00\\41\\5C\\00\\00\\00\\00\\40\\D8\\15\\46\\14\\69\\E4\\FF\\0E\\65\\07\\40\\04\\00\\01\\00\\00\\20\\90\\C9\\4D\\C0\\DB\\40\\02\\00\\88\\80\\73\\0F\\60\\31\\02\\A1\\12\\94\n' +
-    '\\22\\00\\98\\00\\00\\00\\00\\00\\00\\40\\00\\01\\04\\DC\\1F\\2B\\FB\\39\\EA\\BC\\90\\69\\03\\DB,~\n'
+        const trackWidth = levelOneData.track.width ?? 6;
+
         const shape = new THREE.Shape();
         shape.moveTo(-trackWidth, 0);
         shape.lineTo(trackWidth, 0, );
@@ -37,24 +33,66 @@ const basisString = 'sB\\00M\\00h\n' +
         shape.lineTo(-trackWidth, -2, );
         shape.lineTo(-trackWidth, 0, );
 
-        const startPoint = new THREE.Vector3(0, 0, 0);
         const path = new THREE.CurvePath<THREE.Vector3>();
-        const straightEnd = new THREE.Vector3(10, 0, 0);
-        path.add(new THREE.LineCurve3(startPoint, straightEnd));
+        let currentPoint = new THREE.Vector3(0, 0, 0);
 
-        const curveRadius = 17;
-        const curveStart = straightEnd.clone();
-        const curveEnd = new THREE.Vector3(22, 0, curveRadius);
+        const addStraight = (length: number) => {
+            const next = currentPoint.clone().add(new THREE.Vector3(length, 0, 0));
+            path.add(new THREE.LineCurve3(currentPoint.clone(), next.clone()));
+            currentPoint = next;
+        };
 
-        const cp1 = new THREE.Vector3(3, 0, 22 );
-        const cp2 = new THREE.Vector3(3 * 0.45, 0, 22);
+        const addRightCurve = (radius: number) => {
+            const curveStart = currentPoint.clone();
+            const curveRadius = radius;
+            const scale = curveRadius / 17; // preserve proportions used originally
+            const xOffset = 22 * scale;
+            const cpZ = 22 * scale;
+            const cp1x = 3 * scale;
+            const cp2x = 3 * 0.45 * scale;
+            const curveEnd = currentPoint.clone().add(new THREE.Vector3(xOffset, 0, curveRadius));
+            const cp1 = currentPoint.clone().add(new THREE.Vector3(cp1x, 0, cpZ));
+            const cp2 = currentPoint.clone().add(new THREE.Vector3(cp2x, 0, cpZ));
+            path.add(new THREE.CubicBezierCurve3(curveStart, cp1, cp2, curveEnd));
+            currentPoint = curveEnd;
+        };
 
-        path.add(new THREE.CubicBezierCurve3(
-            curveStart,
-            cp1,
-            cp2,
-            curveEnd
-        ));
+        const addLeftCurve = (radius: number) => {
+            const curveStart = currentPoint.clone();
+            const curveRadius = radius;
+            const scale = curveRadius / 17;
+            const xOffset = 22 * scale;
+            const cpZ = 22 * scale;
+            const cp1x = 3 * scale;
+            const cp2x = 3 * 0.45 * scale;
+            const curveEnd = currentPoint.clone().add(new THREE.Vector3(xOffset, 0, -curveRadius));
+            const cp1 = currentPoint.clone().add(new THREE.Vector3(cp1x, 0, -cpZ));
+            const cp2 = currentPoint.clone().add(new THREE.Vector3(cp2x, 0, -cpZ));
+            path.add(new THREE.CubicBezierCurve3(curveStart, cp1, cp2, curveEnd));
+            currentPoint = curveEnd;
+        };
+
+        const segments = levelOneData.track.segments ?? [];
+
+
+
+        for (const seg of segments) {
+            if (seg.straight) {
+                addStraight(Number(seg.straight));
+            } else if (seg.curve) {
+                const curveAmount = Number(seg.curve.left ?? seg.curve.right ?? 0);
+                if (seg.curve.right !== undefined) {
+                    addRightCurve(curveAmount * 4);
+                } else if (seg.curve.left !== undefined) {
+                    addLeftCurve(curveAmount * 4);
+                } else {
+                    addStraight(10);
+                }
+            } else {
+                addStraight(10);
+            }
+        }
+
         const extrudeSettings = {
             steps: 100,
             bevelEnabled: false,
