@@ -35,56 +35,63 @@ export class AssetLoader {
 
         const path = new THREE.CurvePath<THREE.Vector3>();
         let currentPoint = new THREE.Vector3(0, 0, 0);
+        let currentDir = new THREE.Vector3(1, 0, 0); // forward direction
 
         const addStraight = (length: number) => {
-            const next = currentPoint.clone().add(new THREE.Vector3(length, 0, 0));
+            const next = currentPoint.clone().add(currentDir.clone().multiplyScalar(length));
             path.add(new THREE.LineCurve3(currentPoint.clone(), next.clone()));
             currentPoint = next;
         };
 
-        const addRightCurve = (radius: number) => {
-            const curveStart = currentPoint.clone();
-            const curveRadius = radius;
-            const scale = curveRadius / 17; // preserve proportions used originally
-            const xOffset = 22 * scale;
-            const cpZ = 22 * scale;
-            const cp1x = 3 * scale;
-            const cp2x = 3 * 0.45 * scale;
-            const curveEnd = currentPoint.clone().add(new THREE.Vector3(xOffset, 0, curveRadius));
-            const cp1 = currentPoint.clone().add(new THREE.Vector3(cp1x, 0, cpZ));
-            const cp2 = currentPoint.clone().add(new THREE.Vector3(cp2x, 0, cpZ));
-            path.add(new THREE.CubicBezierCurve3(curveStart, cp1, cp2, curveEnd));
-            currentPoint = curveEnd;
-        };
+        const addCurve = (amount: number, turnRight: boolean) => {
+            const baseAngle = Math.PI / 2; // amount 4 -> 90deg
+            const angle = (amount / 4) * baseAngle * (turnRight ? -1 : 1);
+            const endDir = currentDir.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), angle).normalize();
 
-        const addLeftCurve = (radius: number) => {
-            const curveStart = currentPoint.clone();
-            const curveRadius = radius;
-            const scale = curveRadius / 17;
-            const xOffset = 22 * scale;
-            const cpZ = 22 * scale;
-            const cp1x = 3 * scale;
-            const cp2x = 3 * 0.45 * scale;
-            const curveEnd = currentPoint.clone().add(new THREE.Vector3(xOffset, 0, -curveRadius));
-            const cp1 = currentPoint.clone().add(new THREE.Vector3(cp1x, 0, -cpZ));
-            const cp2 = currentPoint.clone().add(new THREE.Vector3(cp2x, 0, -cpZ));
-            path.add(new THREE.CubicBezierCurve3(curveStart, cp1, cp2, curveEnd));
+            const radiusBase = 17; // base radius used in original code
+            const radius = (amount / 4) * radiusBase;
+
+            const perpRight = new THREE.Vector3(-currentDir.z, 0, currentDir.x).normalize();
+            const sideSign = -Math.sign(angle); // choose perp direction so positive for right-turn
+
+            const curveEnd = currentPoint.clone()
+                .add(currentDir.clone().multiplyScalar(radius))
+                .add(perpRight.clone().multiplyScalar(sideSign * radius));
+
+            const cpLen = radius * 0.3;
+            const cpSide = radius * 0.6 * sideSign;
+
+            const cp1 = currentPoint.clone()
+                .add(currentDir.clone().multiplyScalar(cpLen))
+                .add(perpRight.clone().multiplyScalar(cpSide));
+
+            const cp2 = curveEnd.clone()
+                .sub(endDir.clone().multiplyScalar(cpLen))
+                .add(perpRight.clone().multiplyScalar(cpSide));
+
+            path.add(new THREE.CubicBezierCurve3(currentPoint.clone(), cp1, cp2, curveEnd.clone()));
+
             currentPoint = curveEnd;
+            currentDir = endDir;
         };
 
         const segments = levelOneData.track.segments ?? [];
 
-
+        if (segments.length > 0 && segments[0].curve && !segments[0].straight) {
+            addStraight(10);
+        }
 
         for (const seg of segments) {
-            if (seg.straight) {
-                addStraight(Number(seg.straight));
-            } else if (seg.curve) {
-                const curveAmount = Number(seg.curve.left ?? seg.curve.right ?? 0);
-                if (seg.curve.right !== undefined) {
-                    addRightCurve(curveAmount * 4);
-                } else if (seg.curve.left !== undefined) {
-                    addLeftCurve(curveAmount * 4);
+            const s: any = seg;
+            if (s.straight) {
+                addStraight(Number(s.straight));
+            } else if (s.curve) {
+                const curve: any = s.curve;
+                const curveAmount = Number(curve.left ?? curve.right ?? 0);
+                if (curve.right !== undefined) {
+                    addCurve(curveAmount, true);
+                } else if (curve.left !== undefined) {
+                    addCurve(curveAmount, false);
                 } else {
                     addStraight(10);
                 }
