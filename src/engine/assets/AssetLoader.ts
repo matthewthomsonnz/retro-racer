@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { levelOneData } from '../../data/levels';
 
 export class AssetLoader {
     private readonly textureLoader: THREE.TextureLoader;
@@ -36,25 +37,23 @@ export class AssetLoader {
                 shape.lineTo(-trackWidth, -2);
                 shape.lineTo(-trackWidth, 0);
 
-                const startPoint = new THREE.Vector3(0, 0, 0);
+                const startPoint = new THREE.Vector3(-10, 0, 0);
                 const path = new THREE.CurvePath<THREE.Vector3>();
-                const straightLength = 800;
-                const straightEnd = new THREE.Vector3(straightLength, 0, 0);
+                const straightEnd = new THREE.Vector3(30, 0, 0);
                 path.add(new THREE.LineCurve3(startPoint, straightEnd));
 
-                const curveRadius = 17;
-                const curveStart = straightEnd.clone();
-                const curveEnd = new THREE.Vector3(straightLength + 12, 0, curveRadius);
+                const curveStart = straightEnd;
+                const curveEnd = new THREE.Vector3(30, 0, 40);
+                const curveControl = new THREE.Vector3(70, 0, 0);
+                const curve = new THREE.QuadraticBezierCurve3(curveStart, curveControl, curveEnd);
+                path.add(curve);
 
-                const cp1 = new THREE.Vector3(straightLength + 3, 0, 22);
-                const cp2 = new THREE.Vector3(straightLength + 3 * 0.45, 0, 22);
+                const tangentDirection = new THREE.Vector3(-40, 0, 40).normalize();
+                const straightStart = curveEnd;
+                const straightEnd2 = straightStart.clone().add(tangentDirection.multiplyScalar(50));
+                const straight2 = new THREE.LineCurve3(straightStart, straightEnd2);
+                path.add(straight2);
 
-                path.add(new THREE.CubicBezierCurve3(
-                    curveStart,
-                    cp1,
-                    cp2,
-                    curveEnd
-                ));
                 const extrudeSettings = {
                     steps: 100,
                     bevelEnabled: false,
@@ -67,7 +66,8 @@ export class AssetLoader {
                     color: 0x555555,
                     side: THREE.DoubleSide
                 });
-                return new THREE.Mesh(geometry, material);
+                const mesh = new THREE.Mesh(geometry, material);
+                return mesh;
             }
         });
     }
