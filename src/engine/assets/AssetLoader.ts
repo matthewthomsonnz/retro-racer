@@ -50,9 +50,16 @@ export class AssetLoader {
 
                 const tangentDirection = new THREE.Vector3(-40, 0, 40).normalize();
                 const straightStart = curveEnd;
-                const straightEnd2 = straightStart.clone().add(tangentDirection.multiplyScalar(50));
+                const straightEnd2 = straightStart.clone().add(tangentDirection.clone().multiplyScalar(50));
                 const straight2 = new THREE.LineCurve3(straightStart, straightEnd2);
                 path.add(straight2);
+
+                // const leftCurveStart = straightEnd2;
+                // const leftCurveDirection = tangentDirection.clone();
+                // const leftCurveEnd = leftCurveStart.clone().add(new THREE.Vector3(-40, 0, 20));
+                // const leftCurveControl = leftCurveStart.clone().add(leftCurveDirection.multiplyScalar(40)).add(new THREE.Vector3(-40, 0, 0));
+                // const leftCurve = new THREE.QuadraticBezierCurve3(leftCurveStart, leftCurveControl, leftCurveEnd);
+                // path.add(leftCurve);
 
                 const extrudeSettings = {
                     steps: 100,
@@ -60,6 +67,8 @@ export class AssetLoader {
                     extrudePath: path
                 } as any;
 
+                console.log('Creating ExtrudeGeometry with:', { shape, extrudeSettings });
+                console.log('THREE.ExtrudeGeometry available:', typeof THREE.ExtrudeGeometry);
                 const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
 
                 const material = new THREE.MeshStandardMaterial({
