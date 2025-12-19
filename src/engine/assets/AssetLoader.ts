@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { levelOneData } from '../../data/levels';
+import {CornerSeverity} from "../../data/CornerSeverity.ts";
 
 export class AssetLoader {
     private readonly textureLoader: THREE.TextureLoader;
@@ -21,50 +22,113 @@ export class AssetLoader {
 
     loadTrackModel(): Promise<THREE.Object3D> {
         return new Promise((resolve) => {
-
             resolve(createProceduralTrack())
 
             function createProceduralTrack(): THREE.Object3D {
-                const trackWidth = 6;
+                const trackWidth = levelOneData.track.width;
                 const shape = new THREE.Shape();
                 shape.moveTo(-trackWidth, 0);
                 shape.lineTo(trackWidth, 0);
                 shape.lineTo(trackWidth, -2);
-                shape.lineTo(trackWidth + 2, -2);
-                shape.lineTo(trackWidth + 2, -3);
-                shape.lineTo(-trackWidth - 2, -3);
-                shape.lineTo(-trackWidth - 2, -2);
+                shape.lineTo(trackWidth + 20, -2);
+                shape.lineTo(trackWidth + 20, -2);
+                shape.lineTo(-trackWidth - 20, -2);
+                shape.lineTo(-trackWidth - 20, -2);
                 shape.lineTo(-trackWidth, -2);
                 shape.lineTo(-trackWidth, 0);
 
-                const startPoint = new THREE.Vector3(-10, 0, 0);
                 const path = new THREE.CurvePath<THREE.Vector3>();
-                const straightEnd = new THREE.Vector3(30, 0, 0);
-                path.add(new THREE.LineCurve3(startPoint, straightEnd));
 
-                const curveStart = straightEnd;
-                const curveEnd = new THREE.Vector3(30, 0, 40);
-                const curveControl = new THREE.Vector3(70, 0, 0);
-                const curve = new THREE.QuadraticBezierCurve3(curveStart, curveControl, curveEnd);
-                path.add(curve);
+                // Starting position and direction
+                let currentPos = new THREE.Vector3(-10, 0, 0);
+                let currentDirection = new THREE.Vector3(1, 0, 0); // heading in +X direction
 
-                const tangentDirection = new THREE.Vector3(-40, 0, 40).normalize();
-                const straightStart = curveEnd;
-                const straightEnd2 = straightStart.clone().add(tangentDirection.clone().multiplyScalar(50));
-                const straight2 = new THREE.LineCurve3(straightStart, straightEnd2);
-                path.add(straight2);
+                // Helper function to get curve radius based on severity
+                function getRadius(severity: string): number {
+                    const radiusMap: { [key: string]: number } = {
+                        [CornerSeverity.THREE]: 40,
+                        // Add other severities here as needed
+                    };
+                    return radiusMap[severity] || 40;
+                }
 
-                const curveStart2 = straightEnd2;
-                const curveEnd2 = new THREE.Vector3(30, 0, 130);
-                const curveControl2 = new THREE.Vector3(-30, 0, 100);
-                const curve2 = new THREE.QuadraticBezierCurve3(curveStart2, curveControl2, curveEnd2);
-                path.add(curve2);
+                // Process each segment
+                levelOneData.track.segments.forEach(segment => {
+                    if (segment.straight) {
+                        // Add straight segment
+                        const length = segment.straight;
+                        const endPos = currentPos.clone().add(currentDirection.clone().multiplyScalar(length));
+                        path.add(new THREE.LineCurve3(currentPos.clone(), endPos));
+                        currentPos = endPos;
 
-                const tangentDirection2 = new THREE.Vector3(60, 0, 30).normalize();
-                const straightStart3 = curveEnd2;
-                const straightEnd3 = straightStart3.clone().add(tangentDirection2.clone().multiplyScalar(140));
-                const straight3 = new THREE.LineCurve3(straightStart3, straightEnd3);
-                path.add(straight3);
+                    } else if (segment.curve) {
+                        const isLeft = !!segment.curve.left;
+                        const severity = segment.curve.left || segment.curve.right;
+                        const radius = getRadius(severity);
+
+                        // Calculate control point and end point based on current direction
+                        let controlPoint: THREE.Vector3;
+                        let endPoint: THREE.Vector3;
+
+                        if (currentDirection.x > 0.5) {
+                            // Heading in +X direction
+                            if (!isLeft) {
+                                // Turn left (towards +Z)
+                                controlPoint = new THREE.Vector3(currentPos.x + radius, 0, currentPos.z);
+                                endPoint = new THREE.Vector3(currentPos.x + radius, 0, currentPos.z + radius);
+                                currentDirection.set(0, 0, 1);
+                            } else {
+                                // Turn right (towards -Z)
+                                controlPoint = new THREE.Vector3(currentPos.x + radius, 0, currentPos.z);
+                                endPoint = new THREE.Vector3(currentPos.x + radius, 0, currentPos.z - radius);
+                                currentDirection.set(0, 0, -1);
+                            }
+                        } else if (currentDirection.x < -0.5) {
+                            // Heading in -X direction
+                            if (!isLeft) {
+                                // Turn left (towards -Z)
+                                controlPoint = new THREE.Vector3(currentPos.x - radius, 0, currentPos.z);
+                                endPoint = new THREE.Vector3(currentPos.x - radius, 0, currentPos.z - radius);
+                                currentDirection.set(0, 0, -1);
+                            } else {
+                                // Turn right (towards +Z)
+                                controlPoint = new THREE.Vector3(currentPos.x - radius, 0, currentPos.z);
+                                endPoint = new THREE.Vector3(currentPos.x - radius, 0, currentPos.z + radius);
+                                currentDirection.set(0, 0, 1);
+                            }
+                        } else if (currentDirection.z > 0.5) {
+                            // Heading in +Z direction
+                            if (!isLeft) {
+                                // Turn left (towards -X)
+                                controlPoint = new THREE.Vector3(currentPos.x, 0, currentPos.z + radius);
+                                endPoint = new THREE.Vector3(currentPos.x - radius, 0, currentPos.z + radius);
+                                currentDirection.set(-1, 0, 0);
+                            } else {
+                                // Turn right (towards +X)
+                                controlPoint = new THREE.Vector3(currentPos.x, 0, currentPos.z + radius);
+                                endPoint = new THREE.Vector3(currentPos.x + radius, 0, currentPos.z + radius);
+                                currentDirection.set(1, 0, 0);
+                            }
+                        } else if (currentDirection.z < -0.5) {
+                            // Heading in -Z direction
+                            if (!isLeft) {
+                                // Turn left (towards +X)
+                                controlPoint = new THREE.Vector3(currentPos.x, 0, currentPos.z - radius);
+                                endPoint = new THREE.Vector3(currentPos.x + radius, 0, currentPos.z - radius);
+                                currentDirection.set(1, 0, 0);
+                            } else {
+                                // Turn right (towards -X)
+                                controlPoint = new THREE.Vector3(currentPos.x, 0, currentPos.z - radius);
+                                endPoint = new THREE.Vector3(currentPos.x - radius, 0, currentPos.z - radius);
+                                currentDirection.set(-1, 0, 0);
+                            }
+                        }
+
+                        const curve = new THREE.QuadraticBezierCurve3(currentPos.clone(), controlPoint, endPoint);
+                        path.add(curve);
+                        currentPos = endPoint;
+                    }
+                });
 
                 const extrudeSettings = {
                     steps: 100,
@@ -72,10 +136,7 @@ export class AssetLoader {
                     extrudePath: path
                 } as any;
 
-                console.log('Creating ExtrudeGeometry with:', { shape, extrudeSettings });
-                console.log('THREE.ExtrudeGeometry available:', typeof THREE.ExtrudeGeometry);
                 const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-
                 const material = new THREE.MeshStandardMaterial({
                     color: 0x555555,
                     side: THREE.DoubleSide

@@ -18,7 +18,7 @@ export class CameraController {
         switch (this.cameraMode) {
             case 1: {
                 const distance = 100;
-                const height = 30;
+                const height = 15;
                 const forwardX = Math.cos(Angle.toRadians(-player.rotation));
                 const forwardZ = Math.sin(Angle.toRadians(-player.rotation));
                 const camX = player.x - forwardX * distance;

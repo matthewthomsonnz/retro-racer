@@ -1,4 +1,4 @@
-const CornerSeverity = Object.freeze({
+export const CornerSeverity = Object.freeze({
     VERY_TIGHT_HAIRPIN: "veryTightHairpin",
     TIGHT_HAIRPIN:      "tightHairpin",
     HAIRPIN:            "hairpin",

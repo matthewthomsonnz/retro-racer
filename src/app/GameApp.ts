@@ -10,7 +10,7 @@ import { Loop } from '../engine/core/Loop';
 export class GameApp {
     async start(): Promise<void> {
         const rendererContext = new RendererContext();
-        const player = new Player(0, 10, 0, Math.PI);
+        const player = new Player(0, -90, 0, Math.PI);
         const assetLoader = new AssetLoader();
         const world = new GameWorld(rendererContext, player, assetLoader);
         await world.initialize();

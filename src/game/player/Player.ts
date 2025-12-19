@@ -81,7 +81,7 @@ export class Player {
     updatePosition(): void {
         this.x += this.velocity * Math.cos(Angle.toRadians(-this.rotation));
         this.z += this.velocity * Math.sin(Angle.toRadians(-this.rotation));
-
+        window.axesHelper.position.set(this.x, this.y, this.z)
         if (this.keyState.w) {
             this.velocity += 0.02;
         }
