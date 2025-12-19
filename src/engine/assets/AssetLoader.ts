@@ -60,13 +60,11 @@ export class AssetLoader {
                 const curve2 = new THREE.QuadraticBezierCurve3(curveStart2, curveControl2, curveEnd2);
                 path.add(curve2);
 
-
-                // const leftCurveStart = straightEnd2;
-                // const leftCurveDirection = tangentDirection.clone();
-                // const leftCurveEnd = leftCurveStart.clone().add(new THREE.Vector3(-40, 0, 20));
-                // const leftCurveControl = leftCurveStart.clone().add(leftCurveDirection.multiplyScalar(40)).add(new THREE.Vector3(-40, 0, 0));
-                // const leftCurve = new THREE.QuadraticBezierCurve3(leftCurveStart, leftCurveControl, leftCurveEnd);
-                // path.add(leftCurve);
+                const tangentDirection2 = new THREE.Vector3(60, 0, 30).normalize();
+                const straightStart3 = curveEnd2;
+                const straightEnd3 = straightStart3.clone().add(tangentDirection2.clone().multiplyScalar(140));
+                const straight3 = new THREE.LineCurve3(straightStart3, straightEnd3);
+                path.add(straight3);
 
                 const extrudeSettings = {
                     steps: 100,
