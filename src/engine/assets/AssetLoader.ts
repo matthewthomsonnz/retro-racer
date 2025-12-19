@@ -45,11 +45,13 @@ export class AssetLoader {
 
                 // Helper function to get curve radius based on severity
                 function getRadius(severity: string): number {
-                    const radiusMap: { [key: string]: number } = {
-                        [CornerSeverity.THREE]: 40,
-                        // Add other severities here as needed
-                    };
-                    return radiusMap[severity] || 40;
+                    // Find the matching corner severity
+                    for (const key in CornerSeverity) {
+                        if (CornerSeverity[key].value === severity) {
+                            return CornerSeverity[key].radius;
+                        }
+                    }
+                    return 40; // default fallback
                 }
 
                 // Process each segment
