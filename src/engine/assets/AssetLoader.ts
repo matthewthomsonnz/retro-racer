@@ -22,7 +22,7 @@ export class AssetLoader {
 
     loadTrackModel(): Promise<THREE.Object3D> {
         return new Promise((resolve) => {
-            resolve(createProceduralTrack())
+            resolve(createProceduralTrack());
 
             function createProceduralTrack(): THREE.Object3D {
                 const trackWidth = levelOneData.track.width;
@@ -31,120 +31,88 @@ export class AssetLoader {
                 shape.lineTo(trackWidth, 0);
                 shape.lineTo(trackWidth, -2);
                 shape.lineTo(trackWidth + 20, -2);
-                shape.lineTo(trackWidth + 20, -2);
-                shape.lineTo(-trackWidth - 20, -2);
                 shape.lineTo(-trackWidth - 20, -2);
                 shape.lineTo(-trackWidth, -2);
                 shape.lineTo(-trackWidth, 0);
 
                 const path = new THREE.CurvePath<THREE.Vector3>();
 
-                // Starting position and direction
+                // Starting position and heading (0 radians = +X direction)
                 let currentPos = new THREE.Vector3(-10, 0, 0);
-                let currentDirection = new THREE.Vector3(1, 0, 0); // heading in +X direction
+                let currentHeading = 0;
 
-                // Helper function to get curve radius based on severity
-                function getRadius(severity: string): number {
-                    // Find the matching corner severity
+                // Helper to get angle from our new object enum
+                function getAngle(severityValue: string): number {
                     for (const key in CornerSeverity) {
-                        if (CornerSeverity[key].value === severity) {
-                            return CornerSeverity[key].radius;
+                        if (CornerSeverity[key].value === severityValue) {
+                            return (CornerSeverity[key].degrees * Math.PI) / 180;
                         }
                     }
-                    return 40; // default fallback
+                    return Math.PI / 2; // Default 90 deg
                 }
 
-                // Process each segment
                 levelOneData.track.segments.forEach(segment => {
                     if (segment.straight) {
-                        // Add straight segment
                         const length = segment.straight;
-                        const endPos = currentPos.clone().add(currentDirection.clone().multiplyScalar(length));
+                        // Project forward based on current heading
+                        const endPos = new THREE.Vector3(
+                            currentPos.x + Math.cos(currentHeading) * length,
+                            0,
+                            currentPos.z + Math.sin(currentHeading) * length
+                        );
+
                         path.add(new THREE.LineCurve3(currentPos.clone(), endPos));
                         currentPos = endPos;
 
                     } else if (segment.curve) {
                         const isLeft = !!segment.curve.left;
                         const severity = segment.curve.left || segment.curve.right;
-                        const radius = getRadius(severity);
+                        const turnAngle = getAngle(severity);
 
-                        // Calculate control point and end point based on current direction
-                        let controlPoint: THREE.Vector3;
-                        let endPoint: THREE.Vector3;
+                        // Radius will be handled properly in the future as per your plan
+                        const radius = 40;
 
-                        if (currentDirection.x > 0.5) {
-                            // Heading in +X direction
-                            if (!isLeft) {
-                                // Turn left (towards +Z)
-                                controlPoint = new THREE.Vector3(currentPos.x + radius, 0, currentPos.z);
-                                endPoint = new THREE.Vector3(currentPos.x + radius, 0, currentPos.z + radius);
-                                currentDirection.set(0, 0, 1);
-                            } else {
-                                // Turn right (towards -Z)
-                                controlPoint = new THREE.Vector3(currentPos.x + radius, 0, currentPos.z);
-                                endPoint = new THREE.Vector3(currentPos.x + radius, 0, currentPos.z - radius);
-                                currentDirection.set(0, 0, -1);
-                            }
-                        } else if (currentDirection.x < -0.5) {
-                            // Heading in -X direction
-                            if (!isLeft) {
-                                // Turn left (towards -Z)
-                                controlPoint = new THREE.Vector3(currentPos.x - radius, 0, currentPos.z);
-                                endPoint = new THREE.Vector3(currentPos.x - radius, 0, currentPos.z - radius);
-                                currentDirection.set(0, 0, -1);
-                            } else {
-                                // Turn right (towards +Z)
-                                controlPoint = new THREE.Vector3(currentPos.x - radius, 0, currentPos.z);
-                                endPoint = new THREE.Vector3(currentPos.x - radius, 0, currentPos.z + radius);
-                                currentDirection.set(0, 0, 1);
-                            }
-                        } else if (currentDirection.z > 0.5) {
-                            // Heading in +Z direction
-                            if (!isLeft) {
-                                // Turn left (towards -X)
-                                controlPoint = new THREE.Vector3(currentPos.x, 0, currentPos.z + radius);
-                                endPoint = new THREE.Vector3(currentPos.x - radius, 0, currentPos.z + radius);
-                                currentDirection.set(-1, 0, 0);
-                            } else {
-                                // Turn right (towards +X)
-                                controlPoint = new THREE.Vector3(currentPos.x, 0, currentPos.z + radius);
-                                endPoint = new THREE.Vector3(currentPos.x + radius, 0, currentPos.z + radius);
-                                currentDirection.set(1, 0, 0);
-                            }
-                        } else if (currentDirection.z < -0.5) {
-                            // Heading in -Z direction
-                            if (!isLeft) {
-                                // Turn left (towards +X)
-                                controlPoint = new THREE.Vector3(currentPos.x, 0, currentPos.z - radius);
-                                endPoint = new THREE.Vector3(currentPos.x + radius, 0, currentPos.z - radius);
-                                currentDirection.set(1, 0, 0);
-                            } else {
-                                // Turn right (towards -X)
-                                controlPoint = new THREE.Vector3(currentPos.x, 0, currentPos.z - radius);
-                                endPoint = new THREE.Vector3(currentPos.x - radius, 0, currentPos.z - radius);
-                                currentDirection.set(-1, 0, 0);
-                            }
-                        }
+                        // Determine the new heading
+                        // In Three.js/Math, positive rotation is counter-clockwise.
+                        const nextHeading = isLeft ? currentHeading - turnAngle : currentHeading + turnAngle;
 
-                        const curve = new THREE.QuadraticBezierCurve3(currentPos.clone(), controlPoint, endPoint);
-                        path.add(curve);
+                        /**
+                         * To create a smooth arc using a Quadratic Bezier:
+                         * The control point is the intersection of the current heading
+                         * and the next heading.
+                         */
+                        const controlPoint = new THREE.Vector3(
+                            currentPos.x + Math.cos(currentHeading) * radius,
+                            0,
+                            currentPos.z + Math.sin(currentHeading) * radius
+                        );
+
+                        const endPoint = new THREE.Vector3(
+                            controlPoint.x + Math.cos(nextHeading) * radius,
+                            0,
+                            controlPoint.z + Math.sin(nextHeading) * radius
+                        );
+
+                        path.add(new THREE.QuadraticBezierCurve3(currentPos.clone(), controlPoint, endPoint));
+
                         currentPos = endPoint;
+                        currentHeading = nextHeading;
                     }
                 });
 
                 const extrudeSettings = {
-                    steps: 100,
+                    steps: 200, // Increased steps for smoother non-90 deg curves
                     bevelEnabled: false,
                     extrudePath: path
-                } as any;
+                };
 
                 const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
                 const material = new THREE.MeshStandardMaterial({
                     color: 0x555555,
                     side: THREE.DoubleSide
                 });
-                const mesh = new THREE.Mesh(geometry, material);
-                return mesh;
+
+                return new THREE.Mesh(geometry, material);
             }
         });
     }
