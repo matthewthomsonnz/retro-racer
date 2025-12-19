@@ -54,6 +54,13 @@ export class AssetLoader {
                 const straight2 = new THREE.LineCurve3(straightStart, straightEnd2);
                 path.add(straight2);
 
+                const curveStart2 = straightEnd2;
+                const curveEnd2 = new THREE.Vector3(30, 0, 130);
+                const curveControl2 = new THREE.Vector3(-30, 0, 100);
+                const curve2 = new THREE.QuadraticBezierCurve3(curveStart2, curveControl2, curveEnd2);
+                path.add(curve2);
+
+
                 // const leftCurveStart = straightEnd2;
                 // const leftCurveDirection = tangentDirection.clone();
                 // const leftCurveEnd = leftCurveStart.clone().add(new THREE.Vector3(-40, 0, 20));

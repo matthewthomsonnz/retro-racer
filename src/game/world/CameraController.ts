@@ -18,13 +18,14 @@ export class CameraController {
         switch (this.cameraMode) {
             case 1: {
                 const distance = 100;
-                const height = 70;
+                const height = 30;
                 const forwardX = Math.cos(Angle.toRadians(-player.rotation));
                 const forwardZ = Math.sin(Angle.toRadians(-player.rotation));
                 const camX = player.x - forwardX * distance;
                 const camZ = player.z - forwardZ * distance;
                 const camY = player.y + height;
                 this.camera.position.set(camX, camY, camZ);
+                this.camera.fov = 0.0012312
                 this.camera.lookAt(player.x, player.y + 20, player.z);
                 break;
             }
