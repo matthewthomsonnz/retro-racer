@@ -107,9 +107,8 @@ export class GameWorld {
 
     private createLights(): void {
         const lights: [THREE.Light, [number, number, number]][] = [
-            [new THREE.PointLight(0xffffff, 5, 5155), [0, 0, 0]],
-            [new THREE.PointLight(0xffffff, 5, 6155), [0, 0, 0]],
-            [new THREE.HemisphereLight(0xfff0f0, 0x606066, 2.2), [1, 1, 1]],
+            [new THREE.HemisphereLight(0xffffff, 0x000000, 5), [1, 1, 1]],
+            [new THREE.PointLight(0xffffff, 220, 1), [1, 13, 1]],
         ];
 
         lights.forEach(entry => {
