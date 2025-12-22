@@ -146,7 +146,12 @@ export class AssetLoader {
     loadRoadTexture(): Promise<THREE.Texture> {
         const url = '/src/assets/textures/desertTile.ktx2';
         return new Promise((resolve, reject) => {
-            this.basisLoader.load(url, resolve, undefined, reject);
+            this.basisLoader.load(url, (texture) => {
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+                texture.repeat.set(0.5, 0.5);
+                resolve(texture);
+            }, undefined, reject);
         });
     }
 }

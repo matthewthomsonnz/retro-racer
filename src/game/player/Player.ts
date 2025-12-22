@@ -20,6 +20,7 @@ export class Player {
     y: number;
     z: number;
     velocity: number;
+    velocityY: number;
     lap: number;
     rotation: number;
     chaseCameraEnabled: boolean;
@@ -33,6 +34,7 @@ export class Player {
         this.y = y;
         this.z = z;
         this.velocity = 0;
+        this.velocityY = 0;
         this.lap = 1;
         this.rotation = rotation;
         this.chaseCameraEnabled = true;
@@ -58,6 +60,7 @@ export class Player {
         }
 
         let missingHits = 0;
+        let hitYs: number[] = [];
 
         Object.entries(this.rayPositions).forEach(entry => {
             const ray = new THREE.Raycaster();
@@ -70,18 +73,24 @@ export class Player {
 
             if (intersections[0] === undefined) {
                 missingHits += 1;
+            } else {
+                hitYs.push(intersections[0].point.y);
             }
         });
 
-        if ((missingHits === 4 && this.y > -780) || (this.y < -90 && this.y > -780)) {
-            this.y -= 5;
+        if (hitYs.length > 0) {
+            this.y = Math.min(...hitYs);
+            this.velocityY = 0;
         }
     }
 
     updatePosition(): void {
+        this.velocityY -= 0.1; // gravity
+        this.y += this.velocityY;
+
         this.x += this.velocity * Math.cos(Angle.toRadians(-this.rotation));
         this.z += this.velocity * Math.sin(Angle.toRadians(-this.rotation));
-        window.axesHelper.position.set(this.x, this.y, this.z)
+        (window as any).axesHelper.position.set(this.x, this.y, this.z)
         if (this.keyState.w) {
             this.velocity += 0.02;
         }
