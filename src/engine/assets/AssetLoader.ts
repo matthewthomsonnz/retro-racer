@@ -1,16 +1,22 @@
 import * as THREE from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js';
 import { levelOneData } from '../../data/levels';
-import {CornerSeverity} from "../../data/CornerSeverity.ts";
+import { CornerSeverity } from '../../data/CornerSeverity.ts';
 
 export class AssetLoader {
     private readonly textureLoader: THREE.TextureLoader;
     private readonly objectLoader: any;
+    private readonly basisLoader: KTX2Loader;
 
-    constructor(manager?: THREE.LoadingManager) {
+    constructor(renderer: THREE.WebGLRenderer, manager?: THREE.LoadingManager) {
         const loadingManager = manager ?? new THREE.LoadingManager();
         this.textureLoader = new THREE.TextureLoader(loadingManager);
         this.objectLoader = new OBJLoader(loadingManager);
+        this.basisLoader = new KTX2Loader(loadingManager);
+        this.basisLoader.setTranscoderPath('/node_modules/three/examples/js/libs/basis/');
+        console.log(renderer)
+        this.basisLoader.detectSupport(renderer);
     }
 
     loadCarModel(): Promise<THREE.Object3D> {
@@ -20,11 +26,11 @@ export class AssetLoader {
         });
     }
 
-    loadTrackModel(): Promise<THREE.Object3D> {
+    loadTrackModel(roadTexture?: THREE.Texture): Promise<THREE.Object3D> {
         return new Promise((resolve) => {
-            resolve(createProceduralTrack());
+            resolve(createProceduralTrack(roadTexture));
 
-            function createProceduralTrack(): THREE.Object3D {
+            function createProceduralTrack(roadTexture?: THREE.Texture): THREE.Object3D {
                 const trackWidth = levelOneData.track.width;
                 const shape = new THREE.Shape();
                 shape.moveTo(-trackWidth, 0);
@@ -43,9 +49,9 @@ export class AssetLoader {
 
                 // Helper to get angle from our new object enum
                 function getAngle(severityValue: string): number {
-                    for (const key in CornerSeverity) {
-                        if (CornerSeverity[key].value === severityValue) {
-                            return (CornerSeverity[key].degrees * Math.PI) / 180;
+                    for (const corner of Object.values(CornerSeverity)) {
+                        if (corner.value === severityValue) {
+                            return (corner.degrees * Math.PI) / 180;
                         }
                     }
                     return Math.PI / 2; // Default 90 deg
@@ -66,7 +72,7 @@ export class AssetLoader {
 
                     } else if (segment.curve) {
                         const isLeft = !!segment.curve.left;
-                        const severity = segment.curve.left || segment.curve.right;
+                        const severity = (segment.curve.left || segment.curve.right) as string;
                         const turnAngle = getAngle(severity);
 
                         // Radius will be handled properly in the future as per your plan
@@ -108,9 +114,11 @@ export class AssetLoader {
 
                 const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
                 const material = new THREE.MeshStandardMaterial({
-                    color: 0x555555,
                     side: THREE.DoubleSide
                 });
+                if (roadTexture) {
+                    material.map = roadTexture;
+                }
 
                 return new THREE.Mesh(geometry, material);
             }
@@ -132,6 +140,13 @@ export class AssetLoader {
                 undefined,
                 reject,
             );
+        });
+    }
+
+    loadRoadTexture(): Promise<THREE.Texture> {
+        const url = '/src/assets/textures/desertTile.ktx2';
+        return new Promise((resolve, reject) => {
+            this.basisLoader.load(url, resolve, undefined, reject);
         });
     }
 }

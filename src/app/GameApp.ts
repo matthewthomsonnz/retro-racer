@@ -11,8 +11,7 @@ export class GameApp {
     async start(): Promise<void> {
         const rendererContext = new RendererContext();
         const player = new Player(0, -90, 0, Math.PI);
-        const assetLoader = new AssetLoader();
-        const world = new GameWorld(rendererContext, player, assetLoader);
+        const world = new GameWorld(rendererContext, player);
         await world.initialize();
 
         const cameraController = new CameraController(rendererContext.camera);

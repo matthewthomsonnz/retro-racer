@@ -17,10 +17,9 @@ export class GameWorld {
     leftRearWheel: THREE.Mesh | null = null;
     isReady: boolean = false;
 
-    constructor(rendererContext: RendererContext, player: Player, assetLoader: AssetLoader) {
+    constructor(rendererContext: RendererContext, player: Player) {
         this.rendererContext = rendererContext;
         this.player = player;
-        this.assetLoader = assetLoader;
     }
 
     async initialize(): Promise<void> {
@@ -28,11 +27,11 @@ export class GameWorld {
             this.onAssetsLoaded();
         });
 
-        const loader = new AssetLoader(loadingManager);
+        const loader = new AssetLoader(this.rendererContext.renderer, loadingManager);
 
+        const roadTexture = await loader.loadRoadTexture();
         const [trackModel, carModel, waterTexture] = await Promise.all([
-            loader.loadTrackModel(),
-
+            loader.loadTrackModel(roadTexture),
             loader.loadCarModel(),
             loader.loadWaterTexture(),
         ]);
@@ -69,6 +68,12 @@ export class GameWorld {
             return;
         }
 
+        this.track.traverse(child => {
+            if ((child as any).isMesh) {
+                (child as any).receiveShadow = true;
+            }
+        });
+
         this.rendererContext.scene.add(this.track);
         this.track.position.set(40, -120, -50);
         this.track.scale.set(10, 10, 10);
@@ -83,6 +88,7 @@ export class GameWorld {
         this.player.carModel.traverse(child => {
             if ((child as any).isMesh) {
                 (child as any).material.color.setHex(0xff0000);
+                (child as any).castShadow = true;
             }
         });
 
@@ -149,16 +155,24 @@ export class GameWorld {
     }
 
     private createLights(): void {
-        const lights: [THREE.Light, [number, number, number]][] = [
-            [new THREE.HemisphereLight(0xffffff, 0x000000, 5), [1, 1, 1]],
-            [new THREE.PointLight(0xffffff, 220, 1), [1, 13, 1]],
-        ];
+        // Remove existing lights and add directional light for better shadows
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(50, 100, 50);
+        directionalLight.target.position.set(0, 0, 0);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 2048;
+        directionalLight.shadow.mapSize.height = 2048;
+        directionalLight.shadow.camera.near = 0.5;
+        directionalLight.shadow.camera.far = 500;
+        directionalLight.shadow.camera.left = -100;
+        directionalLight.shadow.camera.right = 100;
+        directionalLight.shadow.camera.top = 100;
+        directionalLight.shadow.camera.bottom = -100;
+        this.rendererContext.scene.add(directionalLight);
+        this.rendererContext.scene.add(directionalLight.target);
 
-        lights.forEach(entry => {
-            const light = entry[0];
-            const [x, y, z] = entry[1];
-            light.position.set(x, y, z);
-            this.rendererContext.scene.add(light);
-        });
+        // Add ambient light for fill
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+        this.rendererContext.scene.add(ambientLight);
     }
 }
