@@ -46,6 +46,7 @@ export class AssetLoader {
                 // Starting position and heading (0 radians = +X direction)
                 let currentPos = new THREE.Vector3(-10, 0, 0);
                 let currentHeading = 0;
+                let currentHeight = 0;
 
                 // Helper to get angle from our new object enum
                 function getAngle(severityValue: string): number {
@@ -58,12 +59,14 @@ export class AssetLoader {
                 }
 
                 levelOneData.track.segments.forEach(segment => {
+                    currentHeight += segment.height || 0;
+
                     if (segment.straight) {
                         const length = segment.straight;
                         // Project forward based on current heading
                         const endPos = new THREE.Vector3(
                             currentPos.x + Math.cos(currentHeading) * length,
-                            0,
+                            currentHeight,
                             currentPos.z + Math.sin(currentHeading) * length
                         );
 
@@ -89,13 +92,13 @@ export class AssetLoader {
                          */
                         const controlPoint = new THREE.Vector3(
                             currentPos.x + Math.cos(currentHeading) * radius,
-                            0,
+                            currentHeight,
                             currentPos.z + Math.sin(currentHeading) * radius
                         );
 
                         const endPoint = new THREE.Vector3(
                             controlPoint.x + Math.cos(nextHeading) * radius,
-                            0,
+                            currentHeight,
                             controlPoint.z + Math.sin(nextHeading) * radius
                         );
 

@@ -90,7 +90,7 @@ export class Player {
     }
 
     updatePosition(): void {
-        this.velocityY -= 0.1; // gravity
+        this.velocityY -= -0.2; // gravity
         this.y += this.velocityY;
 
         // acceleration
