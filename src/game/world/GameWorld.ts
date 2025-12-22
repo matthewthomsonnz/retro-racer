@@ -90,7 +90,7 @@ export class GameWorld {
     }
 
     private createWheels(): void {
-        const geometry = new THREE.CylinderGeometry(2, 2, 0.1, 16);
+        const geometry = new THREE.CylinderGeometry(2, 2, 1.2, 16);
         const material = new THREE.MeshBasicMaterial({ color: 0x000000 });
 
         this.rightRearWheel = new THREE.Mesh(geometry, material);
@@ -106,9 +106,6 @@ export class GameWorld {
         this.leftRearWheel.rotation.x = Angle.toRadians(90);
 
         if (this.player.carModel) {
-            let meshCount = 0;
-            this.player.carModel.traverse(child => { if ((child as any).isMesh) meshCount++; });
-
             const box = new THREE.Box3().setFromObject(this.player.carModel);
 
             const size = new THREE.Vector3().subVectors(box.max, box.min);
@@ -128,7 +125,7 @@ export class GameWorld {
             const centerLocal = new THREE.Vector3().addVectors(minLocal, maxLocal)
 
             const wheelRadius = 2;
-            const xInset = 2;
+            const xInset = 10;
             const zInset = 0;
 
             const halfLength = sizeLocal.x / 2;
