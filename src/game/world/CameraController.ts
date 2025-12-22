@@ -4,13 +4,14 @@ import { Angle } from '../../utils/Angle';
 export class CameraController {
     private readonly camera: THREE.PerspectiveCamera;
     private cameraMode: number = 1;
+    private orbitAngle: number = 0;
 
     constructor(camera: THREE.PerspectiveCamera) {
         this.camera = camera;
     }
 
     cycleCamera(): number {
-        this.cameraMode = (this.cameraMode + 1) % 2;
+        this.cameraMode = (this.cameraMode + 1) % 13;
         return this.cameraMode;
     }
 
@@ -19,7 +20,7 @@ export class CameraController {
             case 1: {
                 const distance = 100;
                 const height = 15;
-                const forwardX = Math.cos(Angle.toRadians(-player.rotation));
+                const forwardX = Math.cos(Angle.toRadians(-player.rotation ));
                 const forwardZ = Math.sin(Angle.toRadians(-player.rotation));
                 const camX = player.x - forwardX * distance;
                 const camZ = player.z - forwardZ * distance;
@@ -27,6 +28,16 @@ export class CameraController {
                 this.camera.position.set(camX, camY, camZ);
                 this.camera.fov = 0.0012312
                 this.camera.lookAt(player.x, player.y + 20, player.z);
+                break;
+            }
+            case 2: {
+                this.orbitAngle += 0.01;
+                const radius = 80;
+                const camX = player.x + Math.cos(this.orbitAngle) * radius;
+                const camZ = player.z + Math.sin(this.orbitAngle) * radius;
+                const camY = player.y + 15;
+                this.camera.position.set(camX, camY, camZ);
+                this.camera.lookAt(player.x, player.y, player.z);
                 break;
             }
             default: {
