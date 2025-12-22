@@ -79,7 +79,8 @@ export class Player {
         });
 
         if (hitYs.length > 0) {
-            this.y = Math.min(...hitYs);
+            const targetY = Math.min(...hitYs);
+            this.y += (targetY - this.y) * 0.1;
             this.velocityY = 0;
         }
     }
