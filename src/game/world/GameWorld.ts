@@ -11,8 +11,10 @@ export class GameWorld {
 
     waterMesh: THREE.Mesh | null = null;
     track: THREE.Object3D | null = null;
-    rearWheel: THREE.Mesh | null = null;
-    frontWheel: THREE.Mesh | null = null;
+    rightRearWheel: THREE.Mesh | null = null;
+    rightFrontWheel: THREE.Mesh | null = null;
+    leftFrontWheel: THREE.Mesh | null = null;
+    leftRearWheel: THREE.Mesh | null = null;
     isReady: boolean = false;
 
     constructor(rendererContext: RendererContext, player: Player, assetLoader: AssetLoader) {
@@ -88,20 +90,64 @@ export class GameWorld {
     }
 
     private createWheels(): void {
-        const geometry = new THREE.CylinderGeometry(2, 2, 15, 16);
+        const geometry = new THREE.CylinderGeometry(2, 2, 0.1, 16);
         const material = new THREE.MeshBasicMaterial({ color: 0x000000 });
 
-        this.rearWheel = new THREE.Mesh(geometry, material);
-        this.rearWheel.rotation.x = Angle.toRadians(90);
-        this.rearWheel.position.set(-9, 1.5, 0.3);
+        this.rightRearWheel = new THREE.Mesh(geometry, material);
+        this.rightRearWheel.rotation.x = Angle.toRadians(90);
 
-        this.frontWheel = new THREE.Mesh(geometry, material);
-        this.frontWheel.rotation.x = Angle.toRadians(90);
-        this.frontWheel.position.set(7, 1.5, 0.3);
+        this.rightFrontWheel = new THREE.Mesh(geometry, material);
+        this.rightFrontWheel.rotation.x = Angle.toRadians(90);
+
+        this.leftFrontWheel = new THREE.Mesh(geometry, material);
+        this.leftFrontWheel.rotation.x = Angle.toRadians(90);
+
+        this.leftRearWheel = new THREE.Mesh(geometry, material);
+        this.leftRearWheel.rotation.x = Angle.toRadians(90);
 
         if (this.player.carModel) {
-            this.player.carModel.add(this.frontWheel);
-            this.player.carModel.add(this.rearWheel);
+            let meshCount = 0;
+            this.player.carModel.traverse(child => { if ((child as any).isMesh) meshCount++; });
+
+            const box = new THREE.Box3().setFromObject(this.player.carModel);
+
+            const size = new THREE.Vector3().subVectors(box.max, box.min);
+            const center = new THREE.Vector3().addVectors(box.min, box.max).multiplyScalar(0.5);
+            const geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
+            const material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.3 });
+            const debugCube = new THREE.Mesh(geometry, material);
+            debugCube.position.copy(center);
+            this.player.carModel.add(debugCube);
+
+            const minLocal = box.min.clone();
+            const maxLocal = box.max.clone();
+            this.player.carModel.worldToLocal(minLocal);
+            this.player.carModel.worldToLocal(maxLocal);
+
+            const sizeLocal = new THREE.Vector3().subVectors(maxLocal, minLocal);
+            const centerLocal = new THREE.Vector3().addVectors(minLocal, maxLocal)
+
+            const wheelRadius = 2;
+            const xInset = 2;
+            const zInset = 0;
+
+            const halfLength = sizeLocal.x / 2;
+
+            const frontX = centerLocal.x + halfLength - xInset;
+            const rearX = centerLocal.x - halfLength + xInset;
+            const rightZ = maxLocal.z - zInset;
+            const leftZ = minLocal.z + zInset;
+            const wheelY = minLocal.y + wheelRadius;
+
+            this.rightFrontWheel.position.set(frontX, wheelY, rightZ);
+            this.leftFrontWheel.position.set(frontX, wheelY, leftZ);
+            this.rightRearWheel.position.set(rearX, wheelY, rightZ);
+            this.leftRearWheel.position.set(rearX, wheelY, leftZ);
+
+            this.player.carModel.add(this.rightFrontWheel);
+            this.player.carModel.add(this.rightRearWheel);
+            this.player.carModel.add(this.leftFrontWheel);
+            this.player.carModel.add(this.leftRearWheel);
         }
     }
 
