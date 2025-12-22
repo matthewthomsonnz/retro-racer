@@ -21,6 +21,7 @@ export class Player {
     z: number;
     velocity: number;
     velocityY: number;
+    turnVelocity: number;
     lap: number;
     rotation: number;
     chaseCameraEnabled: boolean;
@@ -35,6 +36,7 @@ export class Player {
         this.z = z;
         this.velocity = 0;
         this.velocityY = 0;
+        this.turnVelocity = 0;
         this.lap = 1;
         this.rotation = rotation;
         this.chaseCameraEnabled = true;
@@ -100,13 +102,17 @@ export class Player {
             this.velocity -= 0.01;
         }
 
-        if ((this.keyState.a && this.velocity > 0.1) || (this.keyState.d && this.velocity < -0.1)) {
-            this.rotation += 1;
+        if (this.keyState.a) {
+            this.turnVelocity += 0.1;
+        } else if (this.keyState.d) {
+            this.turnVelocity -= 0.1;
+        } else {
+            this.turnVelocity *= 0.9;
         }
 
-        if ((this.keyState.d && this.velocity > 0.1) || (this.keyState.a && this.velocity < -0.1)) {
-            this.rotation -= 1;
-        }
+        this.turnVelocity = Math.max(-2, Math.min(2, this.turnVelocity));
+
+        this.rotation += this.turnVelocity;
 
         if (this.velocity > 0 && !this.keyState.w) {
             this.velocity -= 0.04;
