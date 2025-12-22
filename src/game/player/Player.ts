@@ -140,7 +140,8 @@ export class Player {
 
         this.turnVelocity = Math.max(-2, Math.min(2, this.turnVelocity));
 
-        this.rotation += this.turnVelocity;
+        const turnFactor = Math.max(0.2, 1 - speed * 0.05);
+        this.rotation += this.turnVelocity * turnFactor;
 
         if (Math.abs(this.velocityX) > 0 && !this.keyState.w && !this.keyState.s) {
             this.velocityX *= 0.96;
