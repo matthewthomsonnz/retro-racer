@@ -75,7 +75,7 @@ export class AssetLoader {
 
                     } else if (segment.curve) {
                         const isLeft = !!segment.curve.left;
-                        const severity = (segment.curve.left || segment.curve.right) as string;
+                        const severity = ((segment.curve as any).left || (segment.curve as any).right) as string;
                         const turnAngle = getAngle(severity);
 
                         // Radius will be handled properly in the future as per your plan
@@ -109,25 +109,32 @@ export class AssetLoader {
                     }
                 });
 
-                const bankAngle = 12 * Math.PI / 180;
-
-                // const bankAngle = 0
+                const segments = levelOneData.track.segments;
                 const steps = 200;
 
-                const vertices = [];
-                const indices = [];
-                const uvs = [];
+                const vertices: number[] = [];
+                const indices: number[] = [];
+                const uvs: number[] = [];
+
+                const curveLengths = path.getCurveLengths();
+                const totalLength = curveLengths[curveLengths.length - 1];
+                const segmentEndTs = curveLengths.map(l => l / totalLength);
 
                 const frames = path.computeFrenetFrames(steps, false);
 
                 for (let i = 0; i <= steps; i++) {
                     const t = i / steps;
                     const pos = path.getPoint(t);
-                    const tangent = frames.tangents[i];
                     const normal = frames.normals[i];
                     const binormal = frames.binormals[i];
 
-                    // Rotate normal and binormal by bankAngle
+                    let segmentIndex = segmentEndTs.findIndex(endT => t <= endT);
+                    if (segmentIndex === -1) {
+                        segmentIndex = segments.length - 1;
+                    }
+
+                    const bankAngle = (segments[segmentIndex].bankAngle || 0) * Math.PI / 180;
+
                     const rotatedNormal = normal.clone().multiplyScalar(Math.cos(bankAngle))
                         .add(binormal.clone().multiplyScalar(Math.sin(bankAngle)));
                     const rotatedBinormal = binormal.clone().multiplyScalar(Math.cos(bankAngle))
