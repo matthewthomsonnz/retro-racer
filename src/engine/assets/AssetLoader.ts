@@ -206,7 +206,7 @@ export class AssetLoader {
             this.basisLoader.load(url, (texture) => {
                 texture.wrapS = THREE.RepeatWrapping;
                 texture.wrapT = THREE.RepeatWrapping;
-                texture.repeat.set(0.5, 0.5);
+                texture.repeat.set(90.5, 910.5);
                 resolve(texture);
             }, undefined, reject);
         });
