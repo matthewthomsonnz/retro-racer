@@ -37,6 +37,8 @@ export class AssetLoader {
                 shape.lineTo(trackWidth, 0);
                 shape.lineTo(trackWidth, -2);
                 shape.lineTo(trackWidth + 20, -2);
+                shape.lineTo(trackWidth + 20, -4);
+                shape.lineTo(trackWidth - 20, -4);
                 shape.lineTo(-trackWidth - 20, -2);
                 shape.lineTo(-trackWidth, -2);
                 shape.lineTo(-trackWidth, 0);
@@ -201,7 +203,7 @@ export class AssetLoader {
     }
 
     loadRoadTexture(): Promise<THREE.Texture> {
-        const url = '/src/assets/textures/desertTile.ktx2';
+        const url = '/src/assets/textures/road.ktx2';
         return new Promise((resolve, reject) => {
             this.basisLoader.load(url, (texture) => {
                 texture.wrapS = THREE.RepeatWrapping;
