@@ -33,6 +33,9 @@ export class Player {
     keyState: PlayerKeyState;
     rayPositions: PlayerRayPositions;
     carModel: THREE.Object3D | null;
+    groundPitch: number;
+    groundRoll: number;
+    groundNormal: THREE.Vector3;
 
     constructor(x: number, y: number, z: number, rotation: number) {
         this.x = x;
@@ -59,6 +62,9 @@ export class Player {
             rearR: [12, 10, 12, 160],
         };
         this.carModel = null;
+        this.groundPitch = 0;
+        this.groundRoll = 0;
+        this.groundNormal = new THREE.Vector3(0, 1, 0);
     }
 
     updateGrounding(track: THREE.Object3D | null): void {
@@ -66,30 +72,67 @@ export class Player {
             return;
         }
 
-        let missingHits = 0;
-        let hitYs: number[] = [];
+        const hitPoints: Partial<Record<keyof PlayerRayPositions, THREE.Vector3>> = {};
 
         Object.entries(this.rayPositions).forEach(entry => {
+            const key = entry[0] as keyof PlayerRayPositions;
+
+            entry[1][0] = this.x + 14 * Math.cos(Angle.toRadians(entry[1][3] - this.rotation));
+            entry[1][2] = this.z + 14 * Math.sin(Angle.toRadians(entry[1][3] - this.rotation));
+
             const ray = new THREE.Raycaster();
             ray.ray.origin.set(entry[1][0], entry[1][1] + 1110, entry[1][2]);
             ray.ray.direction.set(0, -1, 0);
             const intersections = ray.intersectObject(track, true);
 
-            entry[1][0] = this.x + 14 * Math.cos(Angle.toRadians(entry[1][3] - this.rotation));
-            entry[1][2] = this.z + 14 * Math.sin(Angle.toRadians(entry[1][3] - this.rotation));
-
-            if (intersections[0] === undefined) {
-                missingHits += 1;
-            } else {
-                hitYs.push(intersections[0].point.y);
+            if (intersections[0] !== undefined) {
+                hitPoints[key] = intersections[0].point.clone();
             }
         });
 
-        if (hitYs.length > 0) {
-            const targetY = Math.max(...hitYs);
+        const points = Object.values(hitPoints).filter((v): v is THREE.Vector3 => v !== undefined);
+        if (points.length > 0) {
+            const targetY = Math.max(...points.map(p => p.y));
             const nextY = this.y + (targetY - this.y) * GROUNDING_LERP;
             this.y = Math.max(nextY, targetY);
             this.velocityY = 0;
+        }
+
+        const fl = hitPoints.frontL;
+        const fr = hitPoints.frontR;
+        const rl = hitPoints.rearL;
+        const rr = hitPoints.rearR;
+
+        if (fl && fr && rl && rr) {
+            const leftMid = fl.clone().add(rl).multiplyScalar(0.5);
+            const rightMid = fr.clone().add(rr).multiplyScalar(0.5);
+            const frontMid = fl.clone().add(fr).multiplyScalar(0.5);
+            const rearMid = rl.clone().add(rr).multiplyScalar(0.5);
+
+            const lateral = rightMid.clone().sub(leftMid);
+            const longitudinal = frontMid.clone().sub(rearMid);
+
+            if (lateral.lengthSq() > 1e-6 && longitudinal.lengthSq() > 1e-6) {
+                const normal = new THREE.Vector3().crossVectors(longitudinal, lateral).normalize();
+                if (normal.y < 0) {
+                    normal.multiplyScalar(-1);
+                }
+
+                this.groundNormal.copy(normal);
+
+                const yawRad = Angle.toRadians(this.rotation);
+                const cosY = Math.cos(yawRad);
+                const sinY = Math.sin(yawRad);
+
+                const forwardDir = new THREE.Vector3(cosY, 0, -sinY);
+                const rightDir = new THREE.Vector3(-sinY, 0, -cosY);
+
+                const pitchComponent = normal.dot(forwardDir);
+                const rollComponent = normal.dot(rightDir);
+
+                this.groundPitch = -Math.atan2(pitchComponent, normal.y);
+                this.groundRoll = Math.atan2(rollComponent, normal.y);
+            }
         }
     }
 

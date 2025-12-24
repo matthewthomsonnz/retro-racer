@@ -3,6 +3,7 @@ import { GameWorld } from '../world/GameWorld';
 import { RendererContext } from '../../rendering/RendererContext';
 import { CameraController } from '../world/CameraController';
 import { Angle } from '../../utils/Angle';
+import * as THREE from 'three';
 
 export class RenderSystem {
     private readonly player: Player;
@@ -22,10 +23,15 @@ export class RenderSystem {
             return;
         }
 
-        this.player.carModel.rotation.y = Angle.toRadians(this.player.rotation);
-        this.player.carModel.position.set(this.player.x, this.player.y, this.player.z);
         this.player.updateGrounding(this.world.track);
         this.player.updatePosition();
+
+        const yawQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Angle.toRadians(this.player.rotation));
+        const upQuat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), this.player.groundNormal.clone().normalize());
+
+        this.player.carModel.quaternion.copy(upQuat.multiply(yawQuat));
+        this.player.carModel.position.set(this.player.x, this.player.y, this.player.z);
+
         this.cameraController.updateForPlayer(this.player);
         this.rendererContext.renderer.render(this.rendererContext.scene, this.rendererContext.camera);
     }
