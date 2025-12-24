@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Angle } from '../../utils/Angle';
 
 const STEERING_SCALE = 5.0;
+const GROUNDING_LERP = 1;
 
 export type PlayerKeyState = {
     w: boolean;
@@ -85,8 +86,9 @@ export class Player {
         });
 
         if (hitYs.length > 0) {
-            const targetY = Math.min(...hitYs);
-            this.y += (targetY - this.y) * 0.1;
+            const targetY = Math.max(...hitYs);
+            const nextY = this.y + (targetY - this.y) * GROUNDING_LERP;
+            this.y = Math.max(nextY, targetY);
             this.velocityY = 0;
         }
     }
