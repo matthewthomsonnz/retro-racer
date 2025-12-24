@@ -1,6 +1,5 @@
 import { RendererContext } from '../rendering/RendererContext';
 import { Player } from '../game/player/Player';
-import { AssetLoader } from '../engine/assets/AssetLoader';
 import { GameWorld } from '../game/world/GameWorld';
 import { KeyboardInputHandler } from '../interface/input/KeyboardInputHandler';
 import { CameraController } from '../game/world/CameraController';

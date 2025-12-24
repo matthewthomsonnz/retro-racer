@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { Angle } from '../../utils/Angle';
 
+const STEERING_SCALE = 5.0;
+
 export type PlayerKeyState = {
     w: boolean;
     a: boolean;
@@ -115,9 +117,9 @@ export class Player {
             const targetAngle = Angle.toRadians(-this.rotation);
             let angleDiff = targetAngle - currentAngle;
             angleDiff = ((angleDiff + Math.PI) % (2 * Math.PI)) - Math.PI;
-            let driftFactor = Math.min(0.95, 0.05 + speed * 0.1);
+            let driftFactor = Math.min(0.25, 0.02 + speed * 0.03);
             if (this.keyState.s) {
-                driftFactor *= 1.5; // more slippy when braking
+                driftFactor *= 1.5;
             }
             const newAngle = currentAngle + angleDiff * driftFactor;
             this.velocityX = Math.cos(newAngle) * speed;
@@ -129,19 +131,18 @@ export class Player {
 
         (window as any).axesHelper.position.set(this.x, this.y, this.z);
 
-        // turning
         if (this.keyState.a) {
-            this.turnVelocity += 0.1;
+            this.turnVelocity += 0.012;
         } else if (this.keyState.d) {
-            this.turnVelocity -= 0.1;
+            this.turnVelocity -= 0.012;
         } else {
-            this.turnVelocity *= 0.9;
+            this.turnVelocity *= 0.7;
         }
 
-        this.turnVelocity = Math.max(-2, Math.min(2, this.turnVelocity));
+        this.turnVelocity = Math.max(-0.22, Math.min(0.22, this.turnVelocity));
 
-        const turnFactor = Math.max(0.2, 1 - speed * 0.05);
-        this.rotation += this.turnVelocity * turnFactor;
+        const turnFactor = Math.max(0.06, 0.12 - speed * 0.002);
+        this.rotation += this.turnVelocity * turnFactor * STEERING_SCALE;
 
         if (Math.abs(this.velocityX) > 0 && !this.keyState.w && !this.keyState.s) {
             this.velocityX *= 0.96;

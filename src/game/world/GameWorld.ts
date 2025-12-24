@@ -7,7 +7,7 @@ import { Angle } from '../../utils/Angle';
 export class GameWorld {
     readonly rendererContext: RendererContext;
     readonly player: Player;
-    readonly assetLoader: AssetLoader;
+    readonly assetLoader!: AssetLoader;
 
     waterMesh: THREE.Mesh | null = null;
     track: THREE.Object3D | null = null;
@@ -20,20 +20,20 @@ export class GameWorld {
     constructor(rendererContext: RendererContext, player: Player) {
         this.rendererContext = rendererContext;
         this.player = player;
-    }
 
-    async initialize(): Promise<void> {
         const loadingManager = new THREE.LoadingManager(() => {
             this.onAssetsLoaded();
         });
 
-        const loader = new AssetLoader(this.rendererContext.renderer, loadingManager);
+        this.assetLoader = new AssetLoader(this.rendererContext.renderer, loadingManager);
+    }
 
-        const roadTexture = await loader.loadRoadTexture();
+    async initialize(): Promise<void> {
+        const roadTexture = await this.assetLoader.loadRoadTexture();
         const [trackModel, carModel, waterTexture] = await Promise.all([
-            loader.loadTrackModel(roadTexture),
-            loader.loadCarModel(),
-            loader.loadWaterTexture(),
+            this.assetLoader.loadTrackModel(roadTexture),
+            this.assetLoader.loadCarModel(),
+            this.assetLoader.loadWaterTexture(),
         ]);
 
         this.track = trackModel;
@@ -58,7 +58,7 @@ export class GameWorld {
         material.map = texture;
 
         this.waterMesh = new THREE.Mesh(geometry, material);
-        this.waterMesh.position.set(0, -650, 0);
+        this.waterMesh.position.set(0, 20, 0);
         this.rendererContext.scene.add(this.waterMesh);
         this.rendererContext.scene.background = new THREE.Color(0x3fb8ff);
     }
