@@ -10,6 +10,7 @@ export const levelOneData = {
       { straight: 180, height: 0 },
       { straight: 180, height: 22 },
       { left: 'PALM_BEACH', right: 'GREEK_ISLAND_SHOPS', curve: { left: CornerSeverity.FIVE.value }, height: 35 },
+      { straight: 8180, height: 22 },
     ]
   },
   assets: [

@@ -109,13 +109,60 @@ export class AssetLoader {
                     }
                 });
 
-                const extrudeSettings = {
-                    steps: 200, // Increased steps for smoother non-90 deg curves
-                    bevelEnabled: false,
-                    extrudePath: path
-                };
+                const bankAngle = 12 * Math.PI / 180;
 
-                const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+                // const bankAngle = 0
+                const steps = 200;
+
+                const vertices = [];
+                const indices = [];
+                const uvs = [];
+
+                const frames = path.computeFrenetFrames(steps, false);
+
+                for (let i = 0; i <= steps; i++) {
+                    const t = i / steps;
+                    const pos = path.getPoint(t);
+                    const tangent = frames.tangents[i];
+                    const normal = frames.normals[i];
+                    const binormal = frames.binormals[i];
+
+                    // Rotate normal and binormal by bankAngle
+                    const rotatedNormal = normal.clone().multiplyScalar(Math.cos(bankAngle))
+                        .add(binormal.clone().multiplyScalar(Math.sin(bankAngle)));
+                    const rotatedBinormal = binormal.clone().multiplyScalar(Math.cos(bankAngle))
+                        .sub(normal.clone().multiplyScalar(Math.sin(bankAngle)));
+
+                    // Extrude shape points at this position
+                    const shapePoints = shape.getPoints();
+                    shapePoints.forEach((pt, j) => {
+                        const vertex = pos.clone()
+                            .add(rotatedNormal.clone().multiplyScalar(pt.x))
+                            .add(rotatedBinormal.clone().multiplyScalar(pt.y));
+                        vertices.push(vertex.x, vertex.y, vertex.z);
+                        uvs.push(j / shapePoints.length, t);
+                    });
+                }
+
+// Build faces
+                const pointsPerStep = shape.getPoints().length;
+                for (let i = 0; i < steps; i++) {
+                    for (let j = 0; j < pointsPerStep - 1; j++) {
+                        const a = i * pointsPerStep + j;
+                        const b = a + pointsPerStep;
+                        const c = a + 1;
+                        const d = b + 1;
+
+                        indices.push(a, b, c);
+                        indices.push(b, d, c);
+                    }
+                }
+
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+                geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+                geometry.setIndex(indices);
+                geometry.computeVertexNormals();
                 const material = new THREE.MeshStandardMaterial({
                     side: THREE.DoubleSide
                 });
