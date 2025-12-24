@@ -36,10 +36,10 @@ export class AssetLoader {
                 shape.moveTo(-trackWidth, 0);
                 shape.lineTo(trackWidth, 0);
                 shape.lineTo(trackWidth, -2);
-                shape.lineTo(trackWidth + 20, -2);
-                shape.lineTo(trackWidth + 20, -4);
-                shape.lineTo(trackWidth - 20, -4);
-                shape.lineTo(-trackWidth - 20, -2);
+                shape.lineTo(trackWidth + 200, -2);
+                shape.lineTo(trackWidth + 200, -4);
+                shape.lineTo(trackWidth - 200, -4);
+                shape.lineTo(-trackWidth - 200, -2);
                 shape.lineTo(-trackWidth, -2);
                 shape.lineTo(-trackWidth, 0);
 

@@ -3,6 +3,7 @@ import { Angle } from '../../utils/Angle';
 
 const STEERING_SCALE = 5.0;
 const GROUNDING_LERP = 1;
+const GROUND_NORMAL_EASE = 0.08;
 
 export type PlayerKeyState = {
     w: boolean;
@@ -118,7 +119,7 @@ export class Player {
                     normal.multiplyScalar(-1);
                 }
 
-                this.groundNormal.copy(normal);
+                this.groundNormal.lerp(normal, GROUND_NORMAL_EASE).normalize();
 
                 const yawRad = Angle.toRadians(this.rotation);
                 const cosY = Math.cos(yawRad);
@@ -127,11 +128,11 @@ export class Player {
                 const forwardDir = new THREE.Vector3(cosY, 0, -sinY);
                 const rightDir = new THREE.Vector3(-sinY, 0, -cosY);
 
-                const pitchComponent = normal.dot(forwardDir);
-                const rollComponent = normal.dot(rightDir);
+                const pitchComponent = this.groundNormal.dot(forwardDir);
+                const rollComponent = this.groundNormal.dot(rightDir);
 
-                this.groundPitch = -Math.atan2(pitchComponent, normal.y);
-                this.groundRoll = Math.atan2(rollComponent, normal.y);
+                this.groundPitch = -Math.atan2(pitchComponent, this.groundNormal.y);
+                this.groundRoll = Math.atan2(rollComponent, this.groundNormal.y);
             }
         }
     }
