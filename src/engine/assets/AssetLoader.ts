@@ -31,6 +31,8 @@ export class AssetLoader {
             resolve(createProceduralTrack(roadTexture));
 
             function createProceduralTrack(roadTexture?: THREE.Texture): THREE.Object3D {
+                const group = new THREE.Group();
+
                 const trackWidth = levelOneData.track.width;
                 const shape = new THREE.Shape();
                 shape.moveTo(-trackWidth, 0);
@@ -179,7 +181,66 @@ export class AssetLoader {
                     material.map = roadTexture;
                 }
 
-                return new THREE.Mesh(geometry, material);
+                const roadMesh = new THREE.Mesh(geometry, material);
+                group.add(roadMesh);
+
+                const wallHeight = 8;
+
+                function buildWallMesh(edgeX: number): THREE.Mesh {
+                    const wallVertices: number[] = [];
+                    const wallIndices: number[] = [];
+
+                    for (let i = 0; i <= steps; i++) {
+                        const t = i / steps;
+                        const pos = path.getPoint(t);
+                        const normal = frames.normals[i];
+                        const binormal = frames.binormals[i];
+
+                        let segmentIndex = segmentEndTs.findIndex(endT => t <= endT);
+                        if (segmentIndex === -1) {
+                            segmentIndex = segments.length - 1;
+                        }
+
+                        const bankAngle = (segments[segmentIndex].bankAngle || 0) * Math.PI / 180;
+
+                        const rotatedNormal = normal.clone().multiplyScalar(Math.cos(bankAngle))
+                            .add(binormal.clone().multiplyScalar(Math.sin(bankAngle)));
+                        const rotatedBinormal = binormal.clone().multiplyScalar(Math.cos(bankAngle))
+                            .sub(normal.clone().multiplyScalar(Math.sin(bankAngle)));
+
+                        const bottom = pos.clone().add(rotatedNormal.clone().multiplyScalar(edgeX));
+                        const top = bottom.clone().add(rotatedBinormal.clone().multiplyScalar(wallHeight));
+
+                        wallVertices.push(bottom.x, bottom.y, bottom.z);
+                        wallVertices.push(top.x, top.y, top.z);
+                    }
+
+                    for (let i = 0; i < steps; i++) {
+                        const a = i * 2;
+                        const b = a + 2;
+                        const c = a + 1;
+                        const d = a + 3;
+
+                        wallIndices.push(a, b, c);
+                        wallIndices.push(b, d, c);
+                    }
+
+                    const wallGeometry = new THREE.BufferGeometry();
+                    wallGeometry.setAttribute('position', new THREE.Float32BufferAttribute(wallVertices, 3));
+                    wallGeometry.setIndex(wallIndices);
+                    wallGeometry.computeVertexNormals();
+
+                    const wallMaterial = new THREE.MeshStandardMaterial({
+                        side: THREE.DoubleSide
+                    });
+
+                    return new THREE.Mesh(wallGeometry, wallMaterial);
+                }
+
+                group.add(buildWallMesh(-trackWidth));
+                group.add(buildWallMesh(trackWidth));
+
+                return group;
             }
         });
     }
